@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace BlogsConsole
 {
@@ -15,14 +16,10 @@ namespace BlogsConsole
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            // *******************************************************************
-            // * IT IS NOT A GOOD IDEA TO STORE USER ID AND/OR PASSWORD          *
-            // * DIRECTLY IN A CLASS (ESPECIALLY IF IT WILL BE POSTED ON GITHUB) *
-            // * WE WILL LEARN LATER HOW TO REMOVE THIS DATA FROM THE CLASS      *
-            // *******************************************************************
-            // ## last 2 digits of CRN
-            // XXX your initials
-            optionsBuilder.UseSqlServer(@"Server=bitsql.wctc.edu;Database=Blogs_##_XXX;User ID=YYY;Password=ZZZ");
+            IConfiguration config = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", true, true)
+                .Build();
+            optionsBuilder.UseSqlServer(@config["BloggingContext:ConnectionString"]);
         }
     }
 }
