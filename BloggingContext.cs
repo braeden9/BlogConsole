@@ -14,6 +14,12 @@ namespace BlogsConsole
             this.SaveChanges();
         }
 
+        public void AddPost(Post post)
+        {
+            this.Posts.Add(post);
+            this.SaveChanges();
+        }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             IConfiguration config = new ConfigurationBuilder()

@@ -2,6 +2,8 @@
 using NLog.Web;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace BlogsConsole
 {
@@ -24,7 +26,112 @@ namespace BlogsConsole
                     Console.WriteLine("4) Display Post(s)");
                     Console.WriteLine("Enter q to quit");
                     choice = Console.ReadLine();
+                    Console.Clear();
                     logger.Info($"User selected option {choice}");
+
+                    if (choice == "1") {
+                        var db = new BloggingContext();
+                        var query = db.Blogs.OrderBy(b => b.Name);
+                        Console.WriteLine($"Found {query.Count()} blogs");
+                        foreach (var item in query)
+                        {
+                            Console.WriteLine(item.Name);
+                        }
+                    } else if (choice == "2") {
+                        Console.Write("Enter a name for a new Blog: ");
+                        string name = Console.ReadLine();
+
+                        var blog = new Blog { Name = name };
+
+                        ValidationContext context = new ValidationContext(blog, null, null);
+                        List<ValidationResult> results = new List<ValidationResult>();
+
+                        var isValid = Validator.TryValidateObject(blog, context, results, true);
+                        if (isValid)
+                        {
+                            var db = new BloggingContext();
+                            // check for unique name
+                            if (db.Blogs.Any(b => b.Name == blog.Name))
+                            {
+                                // generate validation error
+                                isValid = false;
+                                results.Add(new ValidationResult("Blog name exists", new string[] { "Name" }));
+                            }
+                            else
+                            {
+                                logger.Info("Validation passed");
+                                // save blog to db
+                                db.AddBlog(blog);
+                                logger.Info("Blog added - {name}", blog.Name);
+                            }
+                        }
+                        if (!isValid)
+                        {
+                            foreach (var result in results)
+                            {
+                                logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
+                            }
+                        }
+                    } else if (choice == "3") {
+                        Console.WriteLine("What blog would you like to post?");
+                        var db = new BloggingContext();
+                        var query = db.Blogs.OrderBy(b => b.BlogId);
+                        int tmpNum = 1;
+                        foreach (var item in query)
+                        {
+                            Console.WriteLine($"{tmpNum}) {item.Name}");
+                            tmpNum++;
+                        }
+                        int bchoice = int.Parse(Console.ReadLine());
+                        if (bchoice >= 1 || bchoice <= tmpNum) {
+                            Console.Clear();
+                            
+                            var post = new Post { BlogId = bchoice-1 };
+
+                            logger.Info($"User selected {query.ToList()[bchoice-1].Name}");
+                            Console.WriteLine($"Selected: {query.ToList()[bchoice-1].Name}");
+
+                            Console.WriteLine("Enter post title:");
+                            string pTitle = Console.ReadLine();
+                            post.Title = pTitle;
+
+                            Console.WriteLine("Enter context of post:");
+                            string pContext = Console.ReadLine();
+                            post.Content = pContext;
+
+                            ValidationContext context = new ValidationContext(post, null, null);
+                            List<ValidationResult> results = new List<ValidationResult>();
+
+                            var isValid = Validator.TryValidateObject(post, context, results, true);
+                            if (isValid)
+                            {
+                                db = new BloggingContext();
+                                // check for unique name
+                                if (db.Posts.Any(p => p.Title == post.Title))
+                                {
+                                    // generate validation error
+                                    isValid = false;
+                                    results.Add(new ValidationResult("Post name exists", new string[] { "Name" }));
+                                }
+                                else
+                                {
+                                    logger.Info("Validation passed");
+                                    // save post to db
+                                    db.AddPost(post);
+                                    logger.Info("Post added - {name}", post.Title);
+                                }
+                            }
+                            if (!isValid)
+                            {
+                                foreach (var result in results)
+                                {
+                                    logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
+                                }
+                            }
+                        }
+                    } else if (choice == "4") {
+                        
+                    }
                 } while (choice.ToLower() != "q");
             }
             catch (Exception ex)
