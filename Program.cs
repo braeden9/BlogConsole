@@ -87,6 +87,7 @@ namespace BlogsConsole
                             Console.Clear();
                             
                             var post = new Post { BlogId = bchoice-1 };
+                            post.Blog = query.ToList()[bchoice-1];
 
                             logger.Info($"User selected {query.ToList()[bchoice-1].Name}");
                             Console.WriteLine($"Selected: {query.ToList()[bchoice-1].Name}");
@@ -96,8 +97,8 @@ namespace BlogsConsole
                             post.Title = pTitle;
 
                             Console.WriteLine("Enter context of post:");
-                            string pContext = Console.ReadLine();
-                            post.Content = pContext;
+                            string pContent = Console.ReadLine();
+                            post.Content = pContent;
 
                             ValidationContext context = new ValidationContext(post, null, null);
                             List<ValidationResult> results = new List<ValidationResult>();
@@ -128,9 +129,37 @@ namespace BlogsConsole
                                     logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
                                 }
                             }
+                        } else {
+                            Console.WriteLine("Number sumbitted was out of range");
                         }
                     } else if (choice == "4") {
-                        
+                        Console.WriteLine("What blog would you like to see the posts on?");
+                        var db = new BloggingContext();
+                        var query = db.Blogs.OrderBy(b => b.BlogId);
+                        int tmpNum = 1;
+                        foreach (var item in query)
+                        {
+                            Console.WriteLine($"{tmpNum}) {item.Name}");
+                            tmpNum++;
+                        }
+                        int bchoice = int.Parse(Console.ReadLine());
+
+                        if (bchoice >= 1 || bchoice <= tmpNum) {
+                            Console.Clear();
+                            Console.WriteLine($"Selected posts with \"{query.ToList()[bchoice-1].Name}\" blog");
+                            var query2 = db.Posts.Where(p => p.BlogId == bchoice);
+                            Console.WriteLine($"Found {query2.Count()} posts");
+
+                            foreach (var post in query2)
+                            {
+                                Console.WriteLine($"Blog Name: {post.Blog.Name}");
+                                Console.WriteLine($"Post Title: {post.Title}");
+                                Console.WriteLine($"Content: {post.Content}");
+                                Console.WriteLine("");
+                            }
+                        } else {
+                            Console.WriteLine("Number sumbitted was out of range");
+                        }
                     }
                 } while (choice.ToLower() != "q");
             }
